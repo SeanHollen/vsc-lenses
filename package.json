@@ -1,0 +1,98 @@
+{
+  "name": "tabs-per-mode",
+  "displayName": "Tabs Per Mode",
+  "description": "Maintain separate tab sets for Explorer and Source Control sidebar modes",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "tabsPerMode.explorerSentinel",
+          "name": "Tabs Per Mode",
+          "type": "webview",
+          "visibility": "visible"
+        }
+      ],
+      "scm": [
+        {
+          "id": "tabsPerMode.scmSentinel",
+          "name": "Tabs Per Mode",
+          "type": "webview",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tabsPerMode.switchToExplorer",
+        "title": "Tabs Per Mode: Switch to Explorer Mode"
+      },
+      {
+        "command": "tabsPerMode.switchToSourceControl",
+        "title": "Tabs Per Mode: Switch to Source Control Mode"
+      },
+      {
+        "command": "tabsPerMode.focusExplorer",
+        "title": "Tabs Per Mode: Open Explorer"
+      },
+      {
+        "command": "tabsPerMode.focusSourceControl",
+        "title": "Tabs Per Mode: Open Source Control"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "tabsPerMode.focusExplorer",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e"
+      },
+      {
+        "command": "tabsPerMode.focusSourceControl",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
+      }
+    ],
+    "configuration": {
+      "title": "Tabs Per Mode",
+      "properties": {
+        "tabsPerMode.autoNavigate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-open the equivalent file in the target mode when switching"
+        },
+        "tabsPerMode.preservePinnedTabs": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep pinned tabs open regardless of mode"
+        },
+        "tabsPerMode.preserveNeutralTabs": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep non-file tabs (settings, output, etc.) open across mode switches"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "@types/vscode": "^1.70.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.0"
+  }
+}
