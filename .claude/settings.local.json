@@ -3,7 +3,9 @@
     "allow": [
       "WebFetch(domain:code.visualstudio.com)",
       "Bash(npx tsc:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(npx @vscode/vsce package 2>&1)",
+      "Bash(rm /Users/seanhollen/code/vscode-tabs/tabs-per-mode-0.0.1.vsix 2>/dev/null; npx @vscode/vsce package 2>&1)"
     ]
   }
 }

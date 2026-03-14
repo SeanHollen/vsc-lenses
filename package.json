@@ -2,7 +2,8 @@
   "name": "tabs-per-mode",
   "displayName": "Tabs Per Mode",
   "description": "Maintain separate tab sets for Explorer and Source Control sidebar modes",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "publisher": "SeanHollen",
   "engines": {
     "vscode": "^1.70.0"
   },
