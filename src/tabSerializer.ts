@@ -41,7 +41,7 @@ export function classifyTab(descriptor: TabDescriptor): SidebarMode | 'neutral' 
   return 'neutral';
 }
 
-export async function restoreTab(descriptor: TabDescriptor): Promise<void> {
+export async function restoreTab(descriptor: TabDescriptor, background = false): Promise<void> {
   try {
     if (descriptor.kind === 'text' && descriptor.uri) {
       const uri = vscode.Uri.parse(descriptor.uri);
@@ -49,7 +49,7 @@ export async function restoreTab(descriptor: TabDescriptor): Promise<void> {
       await vscode.window.showTextDocument(doc, {
         viewColumn: descriptor.viewColumn,
         preview: false,
-        preserveFocus: !descriptor.isActive,
+        preserveFocus: background,
       });
     } else if (descriptor.kind === 'diff' && descriptor.originalUri && descriptor.modifiedUri) {
       const original = vscode.Uri.parse(descriptor.originalUri);
@@ -59,7 +59,7 @@ export async function restoreTab(descriptor: TabDescriptor): Promise<void> {
         original,
         modified,
         descriptor.label,
-        { viewColumn: descriptor.viewColumn, preview: false }
+        { viewColumn: descriptor.viewColumn, preview: false, preserveFocus: background }
       );
     } else if (descriptor.kind === 'gitChange' && descriptor.uri) {
       const uri = vscode.Uri.parse(descriptor.uri);

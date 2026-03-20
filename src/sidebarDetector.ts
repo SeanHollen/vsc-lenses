@@ -19,6 +19,10 @@ class SentinelViewProvider implements vscode.WebviewViewProvider {
       this.log.appendLine(`${this.mode} webview visibility changed: ${webviewView.visible}`);
       if (webviewView.visible) {
         this.onVisible(this.mode);
+      } else if (this.mode === 'scm') {
+        // SCM became invisible — user switched to a non-SCM sidebar (Explorer, Search, etc.)
+        // Treat all non-SCM sidebars as explorer mode
+        this.onVisible('explorer');
       }
     });
 

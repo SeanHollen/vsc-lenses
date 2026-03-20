@@ -52,40 +52,45 @@ export class TabManager implements vscode.Disposable {
         activeTabLabel: activeTab?.label,
       });
 
-      // 3. Determine which tabs to close
+      // 3. Determine which tabs to close (but don't close yet)
       const tabsToClose = currentTabs.filter(descriptor => {
         if (descriptor.isDirty) { return false; }
         if (preservePinned && descriptor.isPinned) { return false; }
         if (preserveNeutral && classifyTab(descriptor) === 'neutral') { return false; }
         return true;
       });
-      this.log.appendLine(`Closing ${tabsToClose.length} tabs: ${tabsToClose.map(t => t.label).join(', ')}`);
+      this.log.appendLine(`Will close ${tabsToClose.length} tabs: ${tabsToClose.map(t => t.label).join(', ')}`);
 
-      // 4. Close tabs
-      await this.closeMatchingTabs(tabsToClose);
-
-      // 5. Restore saved tabs for the new mode
+      // 4. Determine which tab should be selected
       const newModeState = this.modeStates.get(newMode);
+      let targetTab: TabDescriptor | undefined;
+
+      if (autoNavigate && activeTab) {
+        const savedTabs = newModeState?.tabs ?? [];
+        targetTab = findEquivalentInMode(activeTab, newMode, savedTabs);
+        if (targetTab) {
+          this.log.appendLine(`Auto-navigating to equivalent: ${targetTab.label}`);
+        }
+      }
+
+      // 5. Restore saved tabs in the background BEFORE closing old ones
+      //    (old active editor stays visible, so preserveFocus works properly)
+      //    Fire all at once so VS Code can batch the rendering
       if (newModeState && newModeState.tabs.length > 0) {
         this.log.appendLine(`Restoring ${newModeState.tabs.length} tabs for ${newMode}: ${newModeState.tabs.map(t => t.label).join(', ')}`);
         const existingTabs = snapshotTabs();
-        for (const descriptor of newModeState.tabs) {
-          if (!this.isTabAlreadyOpen(descriptor, existingTabs)) {
-            await restoreTab(descriptor);
-          }
-        }
+        const toRestore = newModeState.tabs.filter(d => !this.isTabAlreadyOpen(d, existingTabs));
+        await Promise.all(toRestore.map(d => restoreTab(d, true)));
       } else {
         this.log.appendLine(`No saved tabs for ${newMode}`);
       }
 
-      // 6. Auto-navigate to equivalent file
-      if (autoNavigate && activeTab) {
-        const savedTabs = newModeState?.tabs ?? [];
-        const equivalent = findEquivalentInMode(activeTab, newMode, savedTabs);
-        if (equivalent) {
-          this.log.appendLine(`Auto-navigating to equivalent: ${equivalent.label}`);
-          await restoreTab({ ...equivalent, isActive: true });
-        }
+      // 6. Now close old tabs
+      await this.closeMatchingTabs(tabsToClose);
+
+      // 7. Focus the target tab
+      if (targetTab) {
+        await restoreTab(targetTab, false);
       }
 
       this.currentMode = newMode;

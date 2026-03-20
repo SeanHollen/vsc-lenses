@@ -2,7 +2,7 @@
   "name": "tabs-per-mode",
   "displayName": "Tabs Per Mode",
   "description": "Maintain separate tab sets for Explorer and Source Control sidebar modes",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "SeanHollen",
   "engines": {
     "vscode": "^1.70.0"
@@ -24,7 +24,7 @@
           "visibility": "visible"
         }
       ],
-      "scm": [
+"scm": [
         {
           "id": "tabsPerMode.scmSentinel",
           "name": "Tabs Per Mode",
