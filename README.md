@@ -12,24 +12,39 @@ Each opens a panel of options. Every option has a live example and a legend for 
 
 ## Install
 
-Requires Node.js and VS Code (with its `code` command on PATH).
+Requires Node.js (22.5+ recommended) and VS Code, with its `code` command on PATH. Linux and macOS.
 
 ```bash
-git clone <this repo> && cd vsc-lenses
+git clone git@github.com:SeanHollen/vsc-lenses.git && cd vsc-lenses
 ./install.sh        # or: npm run setup
 lenses .            # open a folder in Lenses
 ```
 
-`install.sh` builds the extension and packages it (`dist/lenses.vsix`). It then installs it into a **separate VS Code data folder** (`~/.local/share/lenses`) and creates a `lenses` command in `~/.local/bin`:
+Lenses runs as **its own editor**: VS Code with a separate data folder (`~/.local/share/lenses`), opened by a `lenses` command in `~/.local/bin`.
 
-- Plain `code` is untouched. `lenses` and `code` can run side by side.
-- On first install, your VS Code settings, keybindings and snippets are copied in, so it feels like your editor. After that, the two are independent.
-- Re-run `./install.sh` any time (e.g. after `git pull`) to rebuild and reinstall.
-- Auto-save is on by default in Lenses (`files.autoSave: afterDelay`, `files.autoSaveWhenNoErrors: true`). You can change it in Lenses' settings.
-- Overrides: `LENSES_HOME`, `LENSES_COMMAND`, `LENSES_BIN_DIR`, `CODE` (see the top of `install.sh`).
-- `./uninstall.sh` removes the command. `./uninstall.sh --purge` also deletes `~/.local/share/lenses`.
+- Your normal `code` is untouched, and `lenses` and `code` can run side by side.
+- On first install, your VS Code settings, keybindings and snippets are copied in, so it feels like your editor. After that the two are independent.
+- Re-run `./install.sh` any time (e.g. after `git pull`) to rebuild and reinstall. It's safe to repeat.
+- `./uninstall.sh` removes the `lenses` command. `./uninstall.sh --purge` also deletes `~/.local/share/lenses`.
+- Overrides (environment variables): `LENSES_HOME`, `LENSES_COMMAND`, `LENSES_BIN_DIR`, `CODE`. See the top of `install.sh`.
 
-You can also install `dist/lenses.vsix` into any VS Code yourself (Extensions → … → Install from VSIX). Note that it then turns auto-save on by default in that VS Code.
+What `install.sh` does: `npm ci`, build, package `dist/lenses.vsix`, install it into Lenses' data folder, apply the editor defaults below, and write the launcher.
+
+### Editor defaults: no built-in AI, auto-save
+
+Lenses is meant to be used alongside AI tools that live outside the editor (e.g. Claude Code), so VS Code's own AI features and their leftovers are turned off:
+
+| | How |
+|---|---|
+| Copilot chat, agents, inline AI suggestions | `chat.disableAIFeatures: true` |
+| Chat button in the title bar | `chat.commandCenter.enabled: false` |
+| Right-hand side bar (the chat panel's home), never shown at startup | `workbench.secondarySideBar.defaultVisibility: "hidden"` |
+| Accounts button (Copilot sign-in) | "Hide Accounts" UI state in Lenses' state database |
+| Auto-save, held while code can't be canonicalized | `files.autoSave: "afterDelay"`, `files.autoSaveWhenNoErrors: true` |
+
+These are written into Lenses' own `settings.json` (`tools/seed-settings.js`), because VS Code lays out the window before extensions load. Extension-provided defaults would let the side bar flash open. Only keys you haven't set are added, so your changes win, even across re-installs. Change them in Lenses' settings like any VS Code setting. Hiding Accounts is UI state rather than a setting, so `tools/seed-state.js` writes it to Lenses' state database. That's skipped if Lenses is running (close it and re-run); you can also right-click the Accounts icon → Hide.
+
+You can also install `dist/lenses.vsix` into any VS Code yourself (Extensions → … → Install from VSIX). The extension ships the AI-off and auto-save settings as defaults, so they apply there too (without the side-bar and Accounts tweaks).
 
 ## Highlight lenses
 
@@ -91,7 +106,7 @@ Custom styles appear in the Format Lenses panel with live examples (a style with
 
 ### Auto-save
 
-Works well with `"files.autoSave": "afterDelay"` plus `"files.autoSaveWhenNoErrors": true` (the extension offers to turn the latter on):
+Lenses turns on `"files.autoSave": "afterDelay"` and `"files.autoSaveWhenNoErrors": true` by default. In another VS Code with auto-save on, the extension offers to turn on the latter:
 
 - While you type, a timed auto-save writes canonical form to disk but doesn't reflow the view under your cursor. The view tidies into your style when you switch away or save manually.
 - Half-typed code can't be canonicalized. Lenses marks it with a "Not saved yet" error, so auto-save waits until the code parses instead of failing.
@@ -117,6 +132,8 @@ Press F5 ("Run Lenses") to open the `sample/` workspace with the extension loade
 
 `tools/launch.sh <workspace>` starts an isolated VS Code (auto-save on) with the Chrome DevTools Protocol on port 9333. `tools/cdp.mjs` drives it (`shot`, `keys`, `click`, `wheel`, `command`, `eval`), which is how the UI was tested. `tools/stop.sh` quits it.
 
+`tools/watch-layout.mjs <port> <seconds>` samples the layout every 50 ms from the earliest moment it can attach. It reports whether the right side bar or the Accounts button was ever visible during startup, which catches flashes a screenshot would miss.
+
 CDP only sees the page Electron renders, so native OS dialogs (save prompts, file pickers) are invisible in its screenshots. To cover that:
 
 - After every `cdp.mjs` command, `tools/native.py` lists X11 windows owned by the test instance (VS Code runs under XWayland). If any exist, the command exits 3 with a warning, and `shot` saves an image of each dialog.
@@ -129,3 +146,6 @@ CDP only sees the page Electron renders, so native OS dialogs (save prompts, fil
 - If a file on disk isn't in canonical form yet, the first save from a styled view reformats the whole file. The Format panel warns about this.
 - A file with a syntax error can't be saved from a styled view until the error is fixed (it can't be canonicalized). Use *View raw file*.
 - Exceptions and imports analysis is static and per-call-target. Dynamic dispatch and imported `.d.ts`-only functions aren't followed.
+- When `install.sh` adds missing editor defaults to Lenses' `settings.json`, it rewrites the file as plain JSON, so comments in that file are dropped. Files that already have every key are left byte-for-byte alone.
+- Hiding the Accounts button needs Node 22.5+ (`node:sqlite`) and Lenses closed during install. Otherwise it's skipped with a note.
+- Windows isn't supported by `install.sh` (the extension itself works; install `dist/lenses.vsix` manually).

@@ -50,6 +50,10 @@ if [ ! -e "$USER_DATA/User/settings.json" ]; then
   [ -e "$USER_DATA/User/settings.json" ] || echo '{}' > "$USER_DATA/User/settings.json"
 fi
 
+step "Applying Lenses editor settings (no AI features, no right side bar, auto-save)"
+node "$HERE/tools/seed-settings.js" "$USER_DATA/User/settings.json"
+node "$HERE/tools/seed-state.js" "$USER_DATA"
+
 step "Installing the extension into $LENSES_HOME"
 "$CODE_BIN" --user-data-dir "$USER_DATA" --extensions-dir "$EXTENSIONS" --install-extension "$HERE/dist/lenses.vsix" --force
 

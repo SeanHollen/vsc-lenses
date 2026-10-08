@@ -325,7 +325,9 @@
     ],
     "configurationDefaults": {
       "files.autoSave": "afterDelay",
-      "files.autoSaveWhenNoErrors": true
+      "files.autoSaveWhenNoErrors": true,
+      "chat.disableAIFeatures": true,
+      "chat.commandCenter.enabled": false
     }
   },
   "scripts": {
