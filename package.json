@@ -1,0 +1,355 @@
+{
+  "name": "lenses",
+  "displayName": "Lenses: Information Highlighting & Personal Formatting",
+  "description": "Highlight what matters (imports, arguments, types, exceptions, branch changes) and read code in your own format while disk keeps the canonical one.",
+  "version": "0.1.0",
+  "publisher": "SeanHollen",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Visualization",
+    "Formatters",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onFileSystem:lens-fmt",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lensesHighlight",
+          "title": "Highlight Lenses",
+          "icon": "media/highlight.svg"
+        },
+        {
+          "id": "lensesFormat",
+          "title": "Format Lenses",
+          "icon": "media/format.svg"
+        }
+      ]
+    },
+    "views": {
+      "lensesHighlight": [
+        {
+          "type": "webview",
+          "id": "lenses.highlightView",
+          "name": "Highlighting"
+        }
+      ],
+      "lensesFormat": [
+        {
+          "type": "webview",
+          "id": "lenses.formatView",
+          "name": "Formatting"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "lenses.selectHighlight",
+        "title": "Choose Highlight Lens\u2026",
+        "category": "Lenses"
+      },
+      {
+        "command": "lenses.selectFormat",
+        "title": "Choose Display Format\u2026",
+        "category": "Lenses"
+      },
+      {
+        "command": "lenses.createCustomStyle",
+        "title": "Create Custom Display Style\u2026",
+        "category": "Lenses"
+      },
+      {
+        "command": "lenses.editCustomStyles",
+        "title": "Edit Custom Display Styles",
+        "category": "Lenses"
+      },
+      {
+        "command": "lenses.openCanonical",
+        "title": "View Raw (Canonical) File",
+        "category": "Lenses"
+      },
+      {
+        "command": "lenses.openProjected",
+        "title": "View File in Display Format",
+        "category": "Lenses"
+      },
+      {
+        "command": "lenses.gotoCanonicalLine",
+        "title": "Go to Canonical Line\u2026",
+        "category": "Lenses"
+      }
+    ],
+    "configuration": {
+      "title": "Lenses",
+      "properties": {
+        "lenses.highlight.scheme": {
+          "type": "string",
+          "default": "none",
+          "enum": [
+            "none",
+            "rainbow",
+            "context",
+            "imports",
+            "arguments",
+            "types",
+            "exceptions",
+            "git"
+          ],
+          "description": "Which highlight lens to apply to JS/TS files."
+        },
+        "lenses.highlight.muteSyntax": {
+          "type": "boolean",
+          "default": true,
+          "description": "Turn ordinary syntax colors into plain text while a lens is on, so the lens colors stand out."
+        },
+        "lenses.format.style": {
+          "type": "string",
+          "default": "canonical",
+          "markdownDescription": "Display style for JS/TS files: `canonical`, `wide`, `narrow`, `minimal`, `tabs`, `allman`, or `custom:<id>` for a style from `#lenses.format.customStyles#`. Files on disk always keep the canonical (Prettier + project config) format.",
+          "examples": [
+            "canonical",
+            "wide",
+            "narrow",
+            "minimal",
+            "tabs",
+            "allman"
+          ]
+        },
+        "lenses.format.autoProject": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically open JS/TS files in the chosen display format."
+        },
+        "lenses.format.customStyles": {
+          "type": "array",
+          "default": [],
+          "markdownDescription": "Your own display styles, built from [Prettier options](https://prettier.io/docs/options). Each appears in the Format Lenses panel; select one with `lenses.format.style: \"custom:<id>\"`. Saving still writes the canonical form.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier (defaults to the name, lower-cased with dashes). Select it as `custom:<id>`."
+              },
+              "name": {
+                "type": "string",
+                "description": "Shown in the Format Lenses panel."
+              },
+              "description": {
+                "type": "string",
+                "description": "One line shown under the name (defaults to a summary of the options)."
+              },
+              "extends": {
+                "type": "string",
+                "description": "Start from another style: a built-in (wide, narrow, minimal, tabs, allman) or an earlier custom style's id.",
+                "examples": [
+                  "wide",
+                  "narrow",
+                  "minimal",
+                  "tabs",
+                  "allman"
+                ]
+              },
+              "prettier": {
+                "type": "object",
+                "description": "Prettier options, layered over `extends`.",
+                "properties": {
+                  "printWidth": {
+                    "type": "integer",
+                    "description": "Line length Prettier tries to stay within.",
+                    "minimum": 10,
+                    "default": 80
+                  },
+                  "tabWidth": {
+                    "type": "integer",
+                    "description": "Spaces per indentation level.",
+                    "minimum": 1,
+                    "default": 2
+                  },
+                  "useTabs": {
+                    "type": "boolean",
+                    "description": "Indent with tabs instead of spaces.",
+                    "default": false
+                  },
+                  "semi": {
+                    "type": "boolean",
+                    "description": "Print semicolons at the ends of statements.",
+                    "default": true
+                  },
+                  "singleQuote": {
+                    "type": "boolean",
+                    "description": "Use single quotes instead of double quotes.",
+                    "default": false
+                  },
+                  "jsxSingleQuote": {
+                    "type": "boolean",
+                    "description": "Use single quotes in JSX.",
+                    "default": false
+                  },
+                  "quoteProps": {
+                    "type": "string",
+                    "description": "When to quote object property names.",
+                    "enum": [
+                      "as-needed",
+                      "consistent",
+                      "preserve"
+                    ],
+                    "default": "as-needed"
+                  },
+                  "trailingComma": {
+                    "type": "string",
+                    "description": "Trailing commas in multi-line lists.",
+                    "enum": [
+                      "all",
+                      "es5",
+                      "none"
+                    ],
+                    "default": "all"
+                  },
+                  "bracketSpacing": {
+                    "type": "boolean",
+                    "description": "Spaces inside object braces: `{ a }` vs `{a}`.",
+                    "default": true
+                  },
+                  "bracketSameLine": {
+                    "type": "boolean",
+                    "description": "Put the `>` of a multi-line JSX element at the end of the last line.",
+                    "default": false
+                  },
+                  "objectWrap": {
+                    "type": "string",
+                    "description": "`collapse` joins objects that fit on one line; `preserve` keeps them expanded if the first key is on a new line.",
+                    "enum": [
+                      "collapse",
+                      "preserve"
+                    ],
+                    "default": "collapse"
+                  },
+                  "arrowParens": {
+                    "type": "string",
+                    "description": "Parentheses around a sole arrow-function parameter.",
+                    "enum": [
+                      "always",
+                      "avoid"
+                    ],
+                    "default": "always"
+                  },
+                  "experimentalTernaries": {
+                    "type": "boolean",
+                    "description": "Prettier's alternative ternary formatting.",
+                    "default": false
+                  },
+                  "experimentalOperatorPosition": {
+                    "type": "string",
+                    "description": "Put binary operators at the start or end of wrapped lines.",
+                    "enum": [
+                      "end",
+                      "start"
+                    ],
+                    "default": "end"
+                  },
+                  "singleAttributePerLine": {
+                    "type": "boolean",
+                    "description": "One JSX attribute per line.",
+                    "default": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "prettierConfigFile": {
+                "type": "string",
+                "description": "Load options from an existing Prettier config file (e.g. `~/.prettierrc.personal.json`). Options in `prettier` override it."
+              },
+              "braces": {
+                "type": "string",
+                "enum": [
+                  "same-line",
+                  "allman"
+                ],
+                "enumDescriptions": [
+                  "Opening braces stay on the same line (Prettier's behaviour).",
+                  "Block, function and class braces go on their own line."
+                ],
+                "description": "Brace placement (applied after Prettier)."
+              }
+            }
+          },
+          "examples": [
+            [
+              {
+                "name": "Laptop",
+                "extends": "narrow",
+                "prettier": {
+                  "printWidth": 64,
+                  "semi": false,
+                  "singleQuote": true
+                }
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "resourceLabelFormatters": [
+      {
+        "scheme": "lens-fmt",
+        "formatting": {
+          "label": "${path}",
+          "separator": "/",
+          "workspaceSuffix": "styled"
+        }
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "lenses.gotoCanonicalLine",
+        "key": "ctrl+g",
+        "mac": "cmd+g",
+        "when": "editorTextFocus && resourceScheme == lens-fmt"
+      }
+    ],
+    "configurationDefaults": {
+      "files.autoSave": "afterDelay",
+      "files.autoSaveWhenNoErrors": true
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --external:typescript --external:prettier --outfile=out/extension.js --sourcemap",
+    "watch": "npm run build -- --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "esbuild test/roundtrip.test.ts --bundle --platform=node --format=cjs --external:typescript --external:prettier --outfile=out/test/roundtrip.js --log-level=warning && node out/test/roundtrip.js",
+    "package": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && vsce package --allow-missing-repository --skip-license --out dist/lenses.vsix",
+    "setup": "./install.sh"
+  },
+  "devDependencies": {
+    "@types/diff": "^5.2.3",
+    "@types/node": "^20.19.39",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "diff": "^5.2.2",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "@vscode/vsce-sign@2.1.0": true
+  }
+}

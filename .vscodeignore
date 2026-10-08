@@ -1,0 +1,16 @@
+src/**
+test/**
+tools/**
+sample/**
+.vscode/**
+out/test/**
+**/*.map
+tsconfig.json
+node_modules/.bin/**
+node_modules/@types/**
+node_modules/esbuild/**
+node_modules/@esbuild/**
+dist/**
+install.sh
+uninstall.sh
+.gitignore
