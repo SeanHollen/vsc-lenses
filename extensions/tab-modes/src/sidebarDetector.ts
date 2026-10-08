@@ -1,52 +1,41 @@
 import * as vscode from 'vscode';
 import { SidebarMode } from './types';
 
-class SentinelViewProvider implements vscode.WebviewViewProvider {
-  constructor(
-    private mode: SidebarMode,
-    private onVisible: (mode: SidebarMode) => void,
-    private log: vscode.OutputChannel,
-  ) {}
-
-  resolveWebviewView(webviewView: vscode.WebviewView) {
-    this.log.appendLine(`${this.mode} webview resolved, visible=${webviewView.visible}`);
-
-    if (webviewView.visible) {
-      this.onVisible(this.mode);
-    }
-
-    webviewView.onDidChangeVisibility(() => {
-      this.log.appendLine(`${this.mode} webview visibility changed: ${webviewView.visible}`);
-      if (webviewView.visible) {
-        this.onVisible(this.mode);
-      } else if (this.mode === 'scm') {
-        // SCM became invisible — user switched to a non-SCM sidebar (Explorer, Search, etc.)
-        // Treat all non-SCM sidebars as explorer mode
-        this.onVisible('explorer');
-      }
-    });
-
-    webviewView.webview.html = '<html><body style="padding:4px;font-size:11px;color:#888;">Tab tracking active</body></html>';
-  }
+class EmptyTree implements vscode.TreeDataProvider<never> {
+  getTreeItem(): vscode.TreeItem { throw new Error('empty'); }
+  getChildren(): never[] { return []; }
 }
 
 export class SidebarDetector implements vscode.Disposable {
   private currentMode: SidebarMode = 'explorer';
   private readonly onModeChangeEmitter = new vscode.EventEmitter<SidebarMode>();
   readonly onDidChangeMode = this.onModeChangeEmitter.event;
+  private readonly onShownEmitter = new vscode.EventEmitter<SidebarMode>();
+  /** The Explorer or Source Control sidebar became visible (fires even if the mode is unchanged). */
+  readonly onDidShowSidebar = this.onShownEmitter.event;
   private disposables: vscode.Disposable[] = [];
+  private readonly trees = new Map<SidebarMode, vscode.TreeView<never>>();
 
   constructor(private log: vscode.OutputChannel) {
     const onVisible = (mode: SidebarMode) => this.fireIfChanged(mode);
 
-    const explorerProvider = new SentinelViewProvider('explorer', onVisible, log);
-    const scmProvider = new SentinelViewProvider('scm', onVisible, log);
-
-    this.disposables.push(
-      vscode.window.registerWebviewViewProvider('tabsPerMode.explorerSentinel', explorerProvider),
-      vscode.window.registerWebviewViewProvider('tabsPerMode.scmSentinel', scmProvider),
-      this.onModeChangeEmitter,
-    );
+    // Tree views report visibility without loading a webview, so mode changes arrive sooner.
+    for (const mode of ['explorer', 'scm'] as SidebarMode[]) {
+      const id = mode === 'explorer' ? 'tabsPerMode.explorerSentinel' : 'tabsPerMode.scmSentinel';
+      const tree = vscode.window.createTreeView(id, { treeDataProvider: new EmptyTree() });
+      tree.message = 'Tab tracking active';
+      this.trees.set(mode, tree);
+      if (tree.visible) onVisible(mode);
+      this.disposables.push(tree, tree.onDidChangeVisibility(e => {
+        log.appendLine(`${mode} sentinel visible=${e.visible}`);
+        if (e.visible) { this.onShownEmitter.fire(mode); onVisible(mode); }
+        else if (mode === 'scm') {
+          // Any non-SCM sidebar (or a closed one) counts as explorer.
+          onVisible('explorer');
+        }
+      }));
+    }
+    this.disposables.push(this.onModeChangeEmitter, this.onShownEmitter);
 
     // Fallback commands for manual switching
     this.disposables.push(
@@ -59,6 +48,11 @@ export class SidebarDetector implements vscode.Disposable {
         this.fireIfChanged('scm');
       }),
     );
+  }
+
+  /** Whether the Explorer or Source Control sidebar is currently showing. */
+  get sidebarShowing(): boolean {
+    return [...this.trees.values()].some(t => t.visible);
   }
 
   get mode(): SidebarMode {

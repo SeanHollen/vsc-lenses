@@ -7,7 +7,7 @@ A VS Code-based editor for JS/TS that changes four things:
 2. **[Formatting is a solved problem](https://maxleiter.com/blog/formatting)** (Max Leiter).
    Store one canonical format, and let each person read and edit the code in the layout they like.
 3. **Removed built-in AI features.** No Copilot chat, agents, inline AI suggestions or their leftover UI. Use AI codegen through tools outside the editor, like Claude Code.
-4. **Tabs per mode.** Explorer and Source Control each keep their own set of tabs. Switching sidebars swaps the open tabs, and jumps to the same file's diff (or back to the file).
+4. **Tabs per mode.** Explorer and Source Control each keep their own set of tabs, and switching sidebars swaps them instantly, with no tabs closing or reopening.
 
 Highlighting and formatting add two icons to the activity bar: **Highlight Lenses** (highlighter) and **Format Lenses** (lines + arrow).
 Each opens a panel of options. Every option has a live example and a legend for the current file.
@@ -125,11 +125,11 @@ No separate language server was needed. Styled views are ordinary documents, so 
 
 From the Tabs Per Mode extension (`extensions/tab-modes`, merged in with its history; formerly SeanHollen/vsc-tab-modes):
 
-- **Explorer** shows only file tabs. **Source Control** shows only diff tabs (`foo.ts (Working Tree)`). Each mode remembers its own tabs across switches and restarts.
-- Switching modes moves you to the equivalent tab: a file opens as its diff, and a diff as its file (in your Lenses display style).
-- Pinned, unsaved and non-file tabs (settings, output) stay open in both modes.
-- Setup, once: expand the **Tabs Per Mode** section at the bottom of both the Explorer and Source Control sidebars. It can be small, but not collapsed; it's how the extension detects which sidebar is showing.
-- Settings: `tabsPerMode.autoNavigate`, `tabsPerMode.preservePinnedTabs`, `tabsPerMode.preserveNeutralTabs`. See [extensions/tab-modes/README.md](extensions/tab-modes/README.md).
+- **Explorer** and **Source Control** each have their own editor group. Switching shows that mode's group maximized, so the other group is hidden. No tab is opened or closed, so there's no flicker, and each mode keeps its scroll positions and undo history.
+- **Ctrl+Shift+E / Ctrl+Shift+G** and the status-bar buttons switch in the same frame. Clicking the activity-bar icons swaps the tabs about two frames after the sidebar (an extension can only react once VS Code has drawn the click).
+- Files open into the current mode's group. A change opened from Source Control lands in the Source Control group as its diff.
+- Setup, once: expand the **Tabs Per Mode** section at the bottom of both the Explorer and Source Control sidebars. It can be small, but not collapsed; it's how clicks on the sidebar icons are detected.
+- `tabsPerMode.strategy: "reopen"` brings back the original close-and-reopen behaviour (with auto-navigate to the equivalent file/diff). See [extensions/tab-modes/README.md](extensions/tab-modes/README.md).
 
 ## Development
 
@@ -146,6 +146,8 @@ Tabs Per Mode is a separate extension in `extensions/tab-modes` with its own `pa
 Press F5 ("Run Lenses") to open the `sample/` workspace with Lenses loaded from source.
 
 `tools/launch.sh <workspace>` starts an isolated VS Code (auto-save on) with the Chrome DevTools Protocol on port 9333. `tools/cdp.mjs` drives it (`shot`, `keys`, `click`, `wheel`, `command`, `eval`), which is how the UI was tested. `tools/stop.sh` quits it.
+
+`tools/trace-frames.mjs <port> <selector | key:ctrl+shift+g>` clicks or presses a key, then prints what was on screen on every animation frame (sidebar, visible tabs, editor text). It's how mode-switch flicker was measured and removed.
 
 `tools/watch-layout.mjs <port> <seconds>` samples the layout every 50 ms from the earliest moment it can attach. It reports whether the right side bar or the Accounts button was ever visible during startup, which catches flashes a screenshot would miss.
 

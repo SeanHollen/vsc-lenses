@@ -2,7 +2,7 @@
   "name": "tabs-per-mode",
   "displayName": "Tabs Per Mode",
   "description": "Maintain separate tab sets for Explorer and Source Control sidebar modes",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "publisher": "SeanHollen",
   "engines": {
     "vscode": "^1.70.0"
@@ -20,15 +20,13 @@
         {
           "id": "tabsPerMode.explorerSentinel",
           "name": "Tabs Per Mode",
-          "type": "webview",
           "visibility": "visible"
         }
       ],
-"scm": [
+      "scm": [
         {
           "id": "tabsPerMode.scmSentinel",
           "name": "Tabs Per Mode",
-          "type": "webview",
           "visibility": "visible"
         }
       ]
@@ -53,14 +51,44 @@
     ],
     "keybindings": [
       {
+        "command": "runCommands",
+        "args": {
+          "commands": [
+            "workbench.action.focusSecondEditorGroup",
+            "workbench.action.focusFirstEditorGroup",
+            "workbench.action.toggleMaximizeEditorGroup",
+            "workbench.view.explorer"
+          ]
+        },
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "config.tabsPerMode.strategy != 'reopen'"
+      },
+      {
+        "command": "runCommands",
+        "args": {
+          "commands": [
+            "workbench.action.focusFirstEditorGroup",
+            "workbench.action.focusSecondEditorGroup",
+            "workbench.action.toggleMaximizeEditorGroup",
+            "workbench.view.scm"
+          ]
+        },
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g",
+        "when": "config.tabsPerMode.strategy != 'reopen'"
+      },
+      {
         "command": "tabsPerMode.focusExplorer",
         "key": "ctrl+shift+e",
-        "mac": "cmd+shift+e"
+        "mac": "cmd+shift+e",
+        "when": "config.tabsPerMode.strategy == 'reopen'"
       },
       {
         "command": "tabsPerMode.focusSourceControl",
         "key": "ctrl+shift+g",
-        "mac": "cmd+shift+g"
+        "mac": "cmd+shift+g",
+        "when": "config.tabsPerMode.strategy == 'reopen'"
       }
     ],
     "configuration": {
@@ -69,17 +97,30 @@
         "tabsPerMode.autoNavigate": {
           "type": "boolean",
           "default": true,
-          "description": "Auto-open the equivalent file in the target mode when switching"
+          "description": "Auto-open the equivalent file in the target mode when switching (\"reopen\" strategy only)."
         },
         "tabsPerMode.preservePinnedTabs": {
           "type": "boolean",
           "default": true,
-          "description": "Keep pinned tabs open regardless of mode"
+          "description": "Keep pinned tabs open regardless of mode (\"reopen\" strategy only)."
         },
         "tabsPerMode.preserveNeutralTabs": {
           "type": "boolean",
           "default": true,
-          "description": "Keep non-file tabs (settings, output, etc.) open across mode switches"
+          "description": "Keep non-file tabs (settings, output, etc.) open across mode switches (\"reopen\" strategy only)."
+        },
+        "tabsPerMode.strategy": {
+          "type": "string",
+          "enum": [
+            "groups",
+            "reopen"
+          ],
+          "default": "groups",
+          "enumDescriptions": [
+            "Each mode has its own editor group; switching shows the other group instantly (no tabs open or close).",
+            "Close the old mode's tabs and reopen the new mode's (original behaviour)."
+          ],
+          "description": "How mode switches swap tabs. Takes effect after reloading the window."
         }
       }
     }
