@@ -24,7 +24,7 @@ By default (`tabsPerMode.strategy: "groups"`), each mode has its own **editor gr
 
 ## Setup
 
-After installing, expand the **"Tabs Per Mode"** section in both the Explorer and Source Control sidebars at least once. This initializes the sidebar detection. The section can be small, but must not be fully collapsed.
+The **"Tabs Per Mode"** section in the Explorer and Source Control sidebars is how sidebar switches are detected (a collapsed view reports nothing). It's expanded automatically the first time you open a folder. It can be small, but keep it expanded; Ctrl+Shift+E / G work either way.
 
 ## How It Works
 

@@ -1,9 +1,14 @@
 // Record what the workbench shows on every animation frame while an action runs: which
 // sidebar is visible and which editor tabs exist. Prints only frames where something changed.
-// Usage: node tools/trace-frames.mjs <port> <css-selector-to-click | key:ctrl+shift+g> [ms=1500]
+// Usage: node tools/trace-frames.mjs <port> <css-selector-to-click | key:ctrl+shift+g | startup> [ms=1500]
+//   "startup": attach as soon as the window exists (run right after launching) and record
+//   the first <ms> milliseconds, to catch anything that flashes while it starts.
 const [port, selector, ms = 1500] = process.argv.slice(2);
-const targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
-const page = targets.find(t => t.type === 'page' && /workbench/.test(t.url));
+let page;
+for (const t0 = Date.now(); !page && Date.now() - t0 < 30000; await new Promise(r => setTimeout(r, 30))) {
+  const targets = await fetch(`http://127.0.0.1:${port}/json`).then(r => r.json(), () => []);
+  page = targets.find(t => t.type === 'page' && /workbench/.test(t.url));
+}
 const ws = new WebSocket(page.webSocketDebuggerUrl);
 await new Promise(r => (ws.onopen = r));
 let id = 0;
@@ -17,7 +22,7 @@ const evaluate = async expr => (await send('Runtime.evaluate', { expression: exp
 await evaluate(`(() => {
   window.__frames = [];
   const snap = () => {
-    const side = document.querySelector('.part.sidebar .composite.title h2, .part.sidebar .title-label h2')?.textContent ?? '';
+    const side = (document.querySelector('.part.sidebar .composite.title h2, .part.sidebar .title-label h2')?.textContent ?? '') + ' ' + [...document.querySelectorAll('.part.sidebar .pane-header')].filter(h => /Tabs Per Mode/.test(h.getAttribute('aria-label'))).map(h => h.getAttribute('aria-expanded') === 'true' ? '[TPM+]' : '[TPM-]').join('');
     // Only groups that are actually on screen (a hidden/maximized-away group has width 0).
     const groups = [...document.querySelectorAll('.editor-group-container')].filter(g => g.getBoundingClientRect().width > 1);
     const tabs = groups.flatMap((g, i) => [...g.querySelectorAll('.tabs-container .tab')].map(t => (groups.length > 1 ? 'g' + i + ':' : '') + t.getAttribute('aria-label').replace(/, preview$/, '').replace(/, Editor Group \\d+$/, '') + (t.classList.contains('active') ? '*' : '')));
@@ -35,7 +40,9 @@ await evaluate(`(() => {
   requestAnimationFrame(tick);
 })()`);
 await new Promise(r => setTimeout(r, 150));
-if (selector.startsWith('key:')) {
+if (selector === 'startup') {
+  // nothing to trigger; just record
+} else if (selector.startsWith('key:')) {
   const parts = selector.slice(4).split('+');
   const key = parts.pop();
   const modifiers = (parts.includes('alt') ? 1 : 0) | (parts.includes('ctrl') ? 2 : 0) | (parts.includes('meta') ? 4 : 0) | (parts.includes('shift') ? 8 : 0);
@@ -48,7 +55,7 @@ if (selector.startsWith('key:')) {
 }
 await new Promise(r => setTimeout(r, +ms));
 const frames = await evaluate('window.__stop = true, window.__frames');
-const base = frames[1]?.[0] ?? 0;
+const base = selector === 'startup' ? 0 : frames[1]?.[0] ?? 0;
 for (const [t, s] of frames) {
   const o = JSON.parse(s);
   console.log(`${String(t - base).padStart(5)}ms  side=${o.side.padEnd(15)} tabs=[${o.tabs.join(', ')}]  editor=${o.editor}`);

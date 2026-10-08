@@ -128,7 +128,7 @@ From the Tabs Per Mode extension (`extensions/tab-modes`, merged in with its his
 - **Explorer** and **Source Control** each have their own editor group. Switching shows that mode's group maximized, so the other group is hidden. No tab is opened or closed, so there's no flicker, and each mode keeps its scroll positions and undo history.
 - **Ctrl+Shift+E / Ctrl+Shift+G** and the status-bar buttons switch in the same frame. Clicking the activity-bar icons swaps the tabs about two frames after the sidebar (an extension can only react once VS Code has drawn the click).
 - Files open into the current mode's group. A change opened from Source Control lands in the Source Control group as its diff.
-- Setup, once: expand the **Tabs Per Mode** section at the bottom of both the Explorer and Source Control sidebars. It can be small, but not collapsed; it's how clicks on the sidebar icons are detected.
+- The small **Tabs Per Mode** section at the bottom of the Explorer and Source Control sidebars is how clicks on the sidebar icons are detected. It's expanded automatically the first time you open a folder; keep it expanded (it can be tiny). If you collapse it, use Ctrl+Shift+E / G or re-expand it.
 - `tabsPerMode.strategy: "reopen"` brings back the original close-and-reopen behaviour (with auto-navigate to the equivalent file/diff). See [extensions/tab-modes/README.md](extensions/tab-modes/README.md).
 
 ## Development

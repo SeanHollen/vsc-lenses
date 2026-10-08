@@ -11,8 +11,11 @@ export function activate(context: vscode.ExtensionContext) {
   const detector = new SidebarDetector(log);
   const strategy = vscode.workspace.getConfiguration('tabsPerMode').get<string>('strategy', 'groups');
   const manager = strategy === 'groups' ? new GroupModeManager(detector, log) : new TabManager(detector, context.workspaceState, log);
-  // Establish the layout for the starting mode (groups may be restored in any state).
-  if (manager instanceof GroupModeManager) void manager.switchTo(detector.mode, true);
+  // Make sure sidebar switches can be detected, then establish the layout for the starting
+  // mode (groups may be restored in any state).
+  void detector.ensureSectionsExpanded(context.workspaceState).then(() => {
+    if (manager instanceof GroupModeManager) return manager.switchTo(detector.mode, true);
+  });
 
   // Status bar buttons
   const explorerBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);

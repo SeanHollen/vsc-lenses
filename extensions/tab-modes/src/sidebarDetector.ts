@@ -50,6 +50,23 @@ export class SidebarDetector implements vscode.Disposable {
     );
   }
 
+  /**
+   * Detection needs both "Tabs Per Mode" sections expanded (a collapsed view reports no
+   * visibility), and VS Code starts them collapsed. Expand them once per workspace: a view's
+   * built-in `.focus` command reveals and expands it. Done in one runCommands step, ending back
+   * in the Explorer with focus in the editor.
+   */
+  async ensureSectionsExpanded(state: vscode.Memento): Promise<void> {
+    const KEY = 'tabsPerMode.sectionsExpanded';
+    if (state.get(KEY)) return;
+    await vscode.commands.executeCommand('runCommands', {
+      commands: ['tabsPerMode.scmSentinel.focus', 'tabsPerMode.explorerSentinel.focus', 'workbench.action.focusActiveEditorGroup'],
+    });
+    // Visibility events arrive just after this resolves, so don't wait on them to record it.
+    await state.update(KEY, true);
+    this.log.appendLine('expanded the Tabs Per Mode sections');
+  }
+
   /** Whether the Explorer or Source Control sidebar is currently showing. */
   get sidebarShowing(): boolean {
     return [...this.trees.values()].some(t => t.visible);
