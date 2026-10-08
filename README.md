@@ -1,13 +1,15 @@
 # Lenses
 
-A VS Code extension for JS/TS that tries out two ideas:
+A VS Code-based editor for JS/TS that changes four things:
 
 1. **[Syntax highlighting is a waste of an information channel](https://buttondown.com/hillelwayne/archive/syntax-highlighting-is-a-waste-of-an-information/)** (Hillel Wayne).
    Color shouldn't just restate the grammar. Each *highlight lens* uses color to answer one question about the code.
 2. **[Formatting is a solved problem](https://maxleiter.com/blog/formatting)** (Max Leiter).
    Store one canonical format, and let each person read and edit the code in the layout they like.
+3. **Removed built-in AI features.** No Copilot chat, agents, inline AI suggestions or their leftover UI. Use AI codegen through tools outside the editor, like Claude Code.
+4. **Tabs per mode.** Explorer and Source Control each keep their own set of tabs. Switching sidebars swaps the open tabs, and jumps to the same file's diff (or back to the file).
 
-There are two new icons in the activity bar: **Highlight Lenses** (highlighter) and **Format Lenses** (lines + arrow).
+Highlighting and formatting add two icons to the activity bar: **Highlight Lenses** (highlighter) and **Format Lenses** (lines + arrow).
 Each opens a panel of options. Every option has a live example and a legend for the current file.
 
 ## Install
@@ -28,7 +30,7 @@ Lenses runs as **its own editor**: VS Code with a separate data folder (`~/.loca
 - `./uninstall.sh` removes the `lenses` command. `./uninstall.sh --purge` also deletes `~/.local/share/lenses`.
 - Overrides (environment variables): `LENSES_HOME`, `LENSES_COMMAND`, `LENSES_BIN_DIR`, `CODE`. See the top of `install.sh`.
 
-What `install.sh` does: `npm ci`, build, package `dist/lenses.vsix`, install it into Lenses' data folder, apply the editor defaults below, and write the launcher.
+What `install.sh` does: `npm ci`, build, package `dist/lenses.vsix` and `dist/tabs-per-mode.vsix`, install both into Lenses' data folder, apply the editor defaults below, and write the launcher.
 
 ### Editor defaults: no built-in AI, auto-save
 
@@ -119,16 +121,29 @@ Lenses turns on `"files.autoSave": "afterDelay"` and `"files.autoSaveWhenNoError
 
 No separate language server was needed. Styled views are ordinary documents, so VS Code's built-in TypeScript server handles them.
 
+## Tabs per mode
+
+From the Tabs Per Mode extension (`extensions/tab-modes`, merged in with its history; formerly SeanHollen/vsc-tab-modes):
+
+- **Explorer** shows only file tabs. **Source Control** shows only diff tabs (`foo.ts (Working Tree)`). Each mode remembers its own tabs across switches and restarts.
+- Switching modes moves you to the equivalent tab: a file opens as its diff, and a diff as its file (in your Lenses display style).
+- Pinned, unsaved and non-file tabs (settings, output) stay open in both modes.
+- Setup, once: expand the **Tabs Per Mode** section at the bottom of both the Explorer and Source Control sidebars. It can be small, but not collapsed; it's how the extension detects which sidebar is showing.
+- Settings: `tabsPerMode.autoNavigate`, `tabsPerMode.preservePinnedTabs`, `tabsPerMode.preserveNeutralTabs`. See [extensions/tab-modes/README.md](extensions/tab-modes/README.md).
+
 ## Development
 
 ```bash
 npm install
-npm run build      # bundle to out/extension.js
-npm test           # round-trip + line-map invariants for every style (pass extra dirs to widen the corpus)
+npm run build      # bundle Lenses to out/extension.js
+npm test           # Lenses round-trip/line-map invariants, then Tabs Per Mode's unit tests
 npm run typecheck
+npm run package    # dist/lenses.vsix + dist/tabs-per-mode.vsix
 ```
 
-Press F5 ("Run Lenses") to open the `sample/` workspace with the extension loaded from source. `npm run package` builds `dist/lenses.vsix`.
+Tabs Per Mode is a separate extension in `extensions/tab-modes` with its own `package.json` (`npm run compile`, `npx vitest run` there). `install.sh` builds and installs both.
+
+Press F5 ("Run Lenses") to open the `sample/` workspace with Lenses loaded from source.
 
 `tools/launch.sh <workspace>` starts an isolated VS Code (auto-save on) with the Chrome DevTools Protocol on port 9333. `tools/cdp.mjs` drives it (`shot`, `keys`, `click`, `wheel`, `command`, `eval`), which is how the UI was tested. `tools/stop.sh` quits it.
 

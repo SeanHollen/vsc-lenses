@@ -334,9 +334,11 @@
     "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --external:typescript --external:prettier --outfile=out/extension.js --sourcemap",
     "watch": "npm run build -- --watch",
     "typecheck": "tsc --noEmit",
-    "test": "esbuild test/roundtrip.test.ts --bundle --platform=node --format=cjs --external:typescript --external:prettier --outfile=out/test/roundtrip.js --log-level=warning && node out/test/roundtrip.js",
-    "package": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && vsce package --allow-missing-repository --skip-license --out dist/lenses.vsix",
-    "setup": "./install.sh"
+    "test": "esbuild test/roundtrip.test.ts --bundle --platform=node --format=cjs --external:typescript --external:prettier --outfile=out/test/roundtrip.js --log-level=warning && node out/test/roundtrip.js && npm run --silent test:tab-modes",
+    "package": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && vsce package --allow-missing-repository --skip-license --out dist/lenses.vsix && npm run --silent package:tab-modes",
+    "setup": "./install.sh",
+    "package:tab-modes": "cd extensions/tab-modes && npm ci --no-audit --no-fund && ../../node_modules/.bin/vsce package --allow-missing-repository --skip-license --out ../../dist/tabs-per-mode.vsix",
+    "test:tab-modes": "cd extensions/tab-modes && npx vitest run"
   },
   "devDependencies": {
     "@types/diff": "^5.2.3",

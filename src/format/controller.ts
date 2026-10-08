@@ -69,6 +69,9 @@ export class FormatController implements vscode.Disposable {
     const doc = editor.document;
     if (doc.uri.scheme === 'file' && isJsTs(doc) && this.style() !== 'canonical' && !doc.isDirty) {
       await this.swap(editor, toLensUri(doc.uri));
+    } else if (doc.uri.scheme === SCHEME && this.style() === 'canonical' && !doc.isDirty) {
+      // A styled tab restored from elsewhere (e.g. Tabs Per Mode) after switching to Canonical.
+      await this.swap(editor, toFileUri(doc.uri));
     }
   }
 

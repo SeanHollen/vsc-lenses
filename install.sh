@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build Lenses and install it as its own editor: a `lenses` command that opens VS Code with
-# a separate data folder where the extension is installed. Your normal `code` is untouched,
+# a separate data folder where the Lenses and Tabs Per Mode extensions are installed. Your normal `code` is untouched,
 # and both can run at the same time. Safe to re-run (rebuilds and reinstalls).
 #
 #   ./install.sh            # or: npm run setup
@@ -34,7 +34,7 @@ npm ci --no-audit --no-fund
 step "Building"
 npm run --silent build
 
-step "Packaging"
+step "Packaging (Lenses + Tabs Per Mode)"
 npm run --silent package
 
 if [ ! -e "$USER_DATA/User/settings.json" ]; then
@@ -54,8 +54,10 @@ step "Applying Lenses editor settings (no AI features, no right side bar, auto-s
 node "$HERE/tools/seed-settings.js" "$USER_DATA/User/settings.json"
 node "$HERE/tools/seed-state.js" "$USER_DATA"
 
-step "Installing the extension into $LENSES_HOME"
-"$CODE_BIN" --user-data-dir "$USER_DATA" --extensions-dir "$EXTENSIONS" --install-extension "$HERE/dist/lenses.vsix" --force
+step "Installing the extensions into $LENSES_HOME"
+"$CODE_BIN" --user-data-dir "$USER_DATA" --extensions-dir "$EXTENSIONS" \
+  --install-extension "$HERE/dist/lenses.vsix" \
+  --install-extension "$HERE/dist/tabs-per-mode.vsix" --force
 
 step "Creating the '$COMMAND' command in $BIN_DIR"
 mkdir -p "$BIN_DIR"

@@ -14,3 +14,4 @@ dist/**
 install.sh
 uninstall.sh
 .gitignore
+extensions/**
