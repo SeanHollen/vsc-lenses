@@ -62,10 +62,18 @@ export class FormatController implements vscode.Disposable {
 
   // --- swapping editors between file: and lens-fmt: ------------------------------------
 
+  /** The plain text tab showing `editor`, in the editor's own group. Undefined when the editor
+   *  is one side of a diff (or anything else that isn't a plain tab), which must be left alone. */
+  private plainTabFor(editor: vscode.TextEditor): vscode.Tab | undefined {
+    const group = vscode.window.tabGroups.all.find(g => g.viewColumn === editor.viewColumn);
+    const tab = group?.activeTab;
+    return tab?.input instanceof vscode.TabInputText && tab.input.uri.toString() === editor.document.uri.toString() ? tab : undefined;
+  }
+
   private async onActive(editor: vscode.TextEditor | undefined) {
     if (!editor) return this.status.hide();
     this.updateStatus(editor);
-    if (this.swapping || !this.autoProject()) return;
+    if (this.swapping || !this.autoProject() || !this.plainTabFor(editor)) return;
     const doc = editor.document;
     if (doc.uri.scheme === 'file' && isJsTs(doc) && this.style() !== 'canonical' && !doc.isDirty) {
       await this.swap(editor, toLensUri(doc.uri));
@@ -89,6 +97,7 @@ export class FormatController implements vscode.Disposable {
     this.fs.styleChanged();
     const projected = this.style() !== 'canonical';
     for (const editor of [...vscode.window.visibleTextEditors]) {
+      if (!this.plainTabFor(editor)) continue; // diff sides etc.
       const doc = editor.document;
       if (!projected && doc.uri.scheme === SCHEME && !doc.isDirty) await this.swap(editor, toFileUri(doc.uri));
       else if (projected && this.autoProject() && doc.uri.scheme === 'file' && isJsTs(doc) && !doc.isDirty) await this.swap(editor, toLensUri(doc.uri));
@@ -100,7 +109,7 @@ export class FormatController implements vscode.Disposable {
   async swap(editor: vscode.TextEditor, target: vscode.Uri) {
     const from = editor.document;
     const canonicalLine = from.uri.scheme === SCHEME ? this.toCanonicalLine(from, editor.selection.active.line) : editor.selection.active.line;
-    const tab = vscode.window.tabGroups.all.flatMap(g => g.tabs).find(t => t.input instanceof vscode.TabInputText && t.input.uri.toString() === from.uri.toString());
+    const tab = this.plainTabFor(editor);
     this.swapping = true;
     try {
       const doc = await vscode.workspace.openTextDocument(target);
