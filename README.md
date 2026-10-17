@@ -32,7 +32,7 @@ Lenses runs as **its own editor**: VS Code with a separate data folder (`~/.loca
 
 What `install.sh` does: `npm ci`, build, package `dist/lenses.vsix` and `dist/tabs-per-mode.vsix`, install both into Lenses' data folder, apply the editor defaults below, and write the launcher.
 
-### Editor defaults: no built-in AI, auto-save
+### Editor defaults: no built-in AI, auto-save, no Restricted Mode
 
 Lenses is meant to be used alongside AI tools that live outside the editor (e.g. Claude Code), so VS Code's own AI features and their leftovers are turned off:
 
@@ -43,6 +43,7 @@ Lenses is meant to be used alongside AI tools that live outside the editor (e.g.
 | Right-hand side bar (the chat panel's home), never shown at startup | `workbench.secondarySideBar.defaultVisibility: "hidden"` |
 | Accounts button (Copilot sign-in) | "Hide Accounts" UI state in Lenses' state database |
 | Auto-save, held while code can't be canonicalized | `files.autoSave: "afterDelay"`, `files.autoSaveWhenNoErrors: true` |
+| No Restricted Mode: every folder is trusted, with no "Do you trust the authors?" prompt | `security.workspace.trust.enabled: false` |
 
 These are written into Lenses' own `settings.json` (`tools/seed-settings.js`), because VS Code lays out the window before extensions load. Extension-provided defaults would let the side bar flash open. Only keys you haven't set are added, so your changes win, even across re-installs. Change them in Lenses' settings like any VS Code setting. Hiding Accounts is UI state rather than a setting, so `tools/seed-state.js` writes it to Lenses' state database. That's skipped if Lenses is running (close it and re-run); you can also right-click the Accounts icon → Hide.
 

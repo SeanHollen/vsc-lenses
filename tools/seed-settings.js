@@ -15,6 +15,9 @@ const DEFAULTS = {
   // Auto-save; styled views hold saves until the code parses.
   'files.autoSave': 'afterDelay',
   'files.autoSaveWhenNoErrors': true,
+  // No Restricted Mode: every folder on this machine is trusted, with no prompt or banner.
+  // Read at startup, so it must be in settings.json.
+  'security.workspace.trust.enabled': false,
 };
 
 const file = process.argv[2];

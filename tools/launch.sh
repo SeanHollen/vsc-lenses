@@ -19,9 +19,10 @@ mkdir -p "$STATE/ud/User" "$STATE/ext"
   "git.openRepositoryInParentFolders": "always",
   "window.zoomLevel": 0,
   "files.autoSave": "afterDelay",
-  "files.autoSaveWhenNoErrors": true
+  "files.autoSaveWhenNoErrors": true,
+  "security.workspace.trust.enabled": false
 }
 JSON
 code --user-data-dir "$STATE/ud" --extensions-dir "$STATE/ext" --extensionDevelopmentPath="$HERE" \
-  --remote-debugging-port=$PORT --disable-workspace-trust --skip-welcome --new-window "$WS" >"$STATE/code.log" 2>&1 &
+  --remote-debugging-port=$PORT --skip-welcome --new-window "$WS" >"$STATE/code.log" 2>&1 &
 for i in $(seq 1 40); do curl -s 127.0.0.1:$PORT/json >/dev/null && break; sleep 0.5; done
