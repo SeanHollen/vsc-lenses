@@ -50,9 +50,11 @@ if [ ! -e "$USER_DATA/User/settings.json" ]; then
   [ -e "$USER_DATA/User/settings.json" ] || echo '{}' > "$USER_DATA/User/settings.json"
 fi
 
-step "Applying Lenses editor settings (no AI features, no right side bar, auto-save)"
+step "Applying Lenses editor settings (no AI features, no right side bar, auto-save, no Restricted Mode)"
 node "$HERE/tools/seed-settings.js" "$USER_DATA/User/settings.json"
-node "$HERE/tools/seed-state.js" "$USER_DATA"
+# The launcher re-runs this on every start, so keep a copy that works even if this repo moves.
+cp "$HERE/tools/apply-state.js" "$LENSES_HOME/apply-state.js"
+node "$LENSES_HOME/apply-state.js" "$USER_DATA"
 
 step "Installing the extensions into $LENSES_HOME"
 "$CODE_BIN" --user-data-dir "$USER_DATA" --extensions-dir "$EXTENSIONS" \
@@ -64,6 +66,8 @@ mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/$COMMAND" <<LAUNCH
 #!/usr/bin/env sh
 # Lenses: VS Code with its own data folder ($LENSES_HOME). Created by $HERE/install.sh
+# Apply settings VS Code keeps as UI state (lenses.editor.showAccounts); no-op if Lenses is running.
+command -v node >/dev/null && node "$LENSES_HOME/apply-state.js" "$USER_DATA" --quiet
 exec "$CODE_BIN" --user-data-dir "$USER_DATA" --extensions-dir "$EXTENSIONS" "\$@"
 LAUNCH
 chmod +x "$BIN_DIR/$COMMAND"

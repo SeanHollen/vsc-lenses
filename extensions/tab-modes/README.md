@@ -13,7 +13,7 @@ By default (`tabsPerMode.strategy: "groups"`), each mode has its own **editor gr
 - Files you open go to the current mode's group, so opening a change from Source Control puts the diff in the Source Control group.
 - The "maximized" button in the editor toolbar is lit, because that's how the other group is hidden. Clicking it shows both groups side by side until the next switch.
 
-`tabsPerMode.strategy: "reopen"` (reload the window after changing it) restores the original behaviour: one group, where switching closes the old mode's tabs and reopens the new mode's. It supports the auto-navigate and preserve options below, at the cost of visible tab churn.
+`tabsPerMode.strategy: "reopen"` restores the original behaviour: one group, where switching closes the old mode's tabs and reopens the new mode's. It supports the auto-navigate and preserve options below, at the cost of visible tab churn.
 
 ## Features
 
@@ -41,6 +41,7 @@ Manual commands are also available via the command palette:
 
 | Setting | Default | Description |
 |---|---|---|
+| `tabsPerMode.enabled` | `true` | Split tabs by mode. Turn off for plain VS Code tabs (the mode groups are merged into one); takes effect immediately |
 | `tabsPerMode.autoNavigate` | `true` | Auto-open the equivalent file when switching modes |
 | `tabsPerMode.preservePinnedTabs` | `true` | Keep pinned tabs open across mode switches |
 | `tabsPerMode.preserveNeutralTabs` | `true` | Keep non-file tabs (settings, output, etc.) open across mode switches |

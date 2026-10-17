@@ -20,14 +20,16 @@
         {
           "id": "tabsPerMode.explorerSentinel",
           "name": "Tabs Per Mode",
-          "visibility": "visible"
+          "visibility": "visible",
+          "when": "config.tabsPerMode.enabled"
         }
       ],
       "scm": [
         {
           "id": "tabsPerMode.scmSentinel",
           "name": "Tabs Per Mode",
-          "visibility": "visible"
+          "visibility": "visible",
+          "when": "config.tabsPerMode.enabled"
         }
       ]
     },
@@ -62,7 +64,7 @@
         },
         "key": "ctrl+shift+e",
         "mac": "cmd+shift+e",
-        "when": "config.tabsPerMode.strategy != 'reopen'"
+        "when": "config.tabsPerMode.enabled && config.tabsPerMode.strategy != 'reopen'"
       },
       {
         "command": "runCommands",
@@ -76,24 +78,30 @@
         },
         "key": "ctrl+shift+g",
         "mac": "cmd+shift+g",
-        "when": "config.tabsPerMode.strategy != 'reopen'"
+        "when": "config.tabsPerMode.enabled && config.tabsPerMode.strategy != 'reopen'"
       },
       {
         "command": "tabsPerMode.focusExplorer",
         "key": "ctrl+shift+e",
         "mac": "cmd+shift+e",
-        "when": "config.tabsPerMode.strategy == 'reopen'"
+        "when": "config.tabsPerMode.enabled && config.tabsPerMode.strategy == 'reopen'"
       },
       {
         "command": "tabsPerMode.focusSourceControl",
         "key": "ctrl+shift+g",
         "mac": "cmd+shift+g",
-        "when": "config.tabsPerMode.strategy == 'reopen'"
+        "when": "config.tabsPerMode.enabled && config.tabsPerMode.strategy == 'reopen'"
       }
     ],
     "configuration": {
       "title": "Tabs Per Mode",
       "properties": {
+        "tabsPerMode.enabled": {
+          "type": "boolean",
+          "default": true,
+          "order": 0,
+          "markdownDescription": "Keep a separate set of tabs for the Explorer and for Source Control. Turn off for plain VS Code tabs (the two sets are merged into one group)."
+        },
         "tabsPerMode.autoNavigate": {
           "type": "boolean",
           "default": true,

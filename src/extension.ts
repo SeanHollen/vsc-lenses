@@ -9,15 +9,22 @@ import { SCHEMES, schemeById } from './highlight/schemes';
 import * as os from 'node:os';
 import { allStyles, CustomStyleConfig, setCustomStyles, styleById } from './format/styles';
 import { isCanonical } from './format/project';
+import { DIFFERENCES } from './differences';
 
 const cfg = () => vscode.workspace.getConfiguration('lenses');
 
 export function activate(context: vscode.ExtensionContext) {
-  const scheme = () => cfg().get<string>('highlight.scheme', 'none');
+  // Turning a feature off makes it behave as its "plain VS Code" choice.
+  const highlightOn = () => cfg().get<boolean>('highlight.enabled', true);
+  const formatOn = () => cfg().get<boolean>('format.enabled', true);
+  const scheme = () => highlightOn() ? cfg().get<string>('highlight.scheme', 'none') : 'none';
   const mute = () => cfg().get<boolean>('highlight.muteSyntax', true);
-  const style = () => cfg().get<string>('format.style', 'canonical');
+  const style = () => formatOn() ? cfg().get<string>('format.style', 'canonical') : 'canonical';
   const autoProject = () => cfg().get<boolean>('format.autoProject', true);
   const set = (key: string, value: unknown) => cfg().update(key, value, vscode.ConfigurationTarget.Global);
+  // Choosing a lens or format (palette, status bar) turns that feature back on if it was off.
+  const setHighlight = async (id: string) => { if (!highlightOn()) await set('highlight.enabled', true); await set('highlight.scheme', id); };
+  const setFormat = async (id: string) => { if (!formatOn()) await set('format.enabled', true); await set('format.style', id); };
 
   // Custom styles must be registered before anything projects a document.
   const loadCustomStyles = () => {
@@ -104,7 +111,7 @@ export function activate(context: vscode.ExtensionContext) {
     const s = schemeById(scheme());
     lensStatus.text = `$(eye) ${s && s.id !== 'none' ? s.name : 'No lens'}`;
     lensStatus.tooltip = s && s.id !== 'none' ? `Highlight lens: ${s.question}` : 'Pick a highlight lens';
-    lensStatus.show();
+    if (highlightOn()) lensStatus.show(); else lensStatus.hide();
   };
   updateLensStatus();
   context.subscriptions.push(lensStatus);
@@ -122,13 +129,16 @@ export function activate(context: vscode.ExtensionContext) {
         // The active style's definition may have changed: re-project open views.
         if (styleById(style()).custom || !allStyles().some(s => s.id === style())) await format.applyStyleToOpenEditors();
       }
-      if (e.affectsConfiguration('lenses.format.style')) {
+      if (e.affectsConfiguration('lenses.format.style') || e.affectsConfiguration('lenses.format.enabled')) {
         const dirty = vscode.workspace.textDocuments.filter(d => d.uri.scheme === SCHEME && d.isDirty).length;
         if (dirty) vscode.window.showInformationMessage(`${dirty} unsaved styled file${dirty > 1 ? 's keep their' : ' keeps its'} old layout until saved.`);
         await format.applyStyleToOpenEditors();
         formatView.refresh();
       }
       if (e.affectsConfiguration('lenses.format.autoProject')) formatView.refresh();
+      if (e.affectsConfiguration('lenses.editor.showAccounts')) {
+        vscode.window.showInformationMessage('The Accounts button changes the next time Lenses starts: close all Lenses windows, then open Lenses again. (Or right-click the activity bar and choose Accounts.)');
+      }
       if (e.affectsConfiguration('files.autoSave') || e.affectsConfiguration('lenses.format.style')) void suggestAutoSaveSetting();
     }),
 
@@ -137,14 +147,14 @@ export function activate(context: vscode.ExtensionContext) {
         SCHEMES.map(s => ({ label: s.name, description: s.question, detail: s.description, id: s.id, picked: s.id === scheme() })),
         { title: 'Highlight lens', placeHolder: 'What should color tell you?' },
       );
-      if (pick) await set('highlight.scheme', pick.id);
+      if (pick) await setHighlight(pick.id);
     }),
     vscode.commands.registerCommand('lenses.selectFormat', async () => {
       const pick = await vscode.window.showQuickPick(
         allStyles().map(s => ({ label: s.name, description: s.custom ? 'custom' : undefined, detail: s.description, id: s.id, picked: s.id === style() })),
         { title: 'Display format', placeHolder: 'How do you want to read code? (Disk keeps the canonical form.)' },
       );
-      if (pick) await set('format.style', pick.id);
+      if (pick) await setFormat(pick.id);
     }),
     vscode.commands.registerCommand('lenses.editCustomStyles', () =>
       vscode.commands.executeCommand('workbench.action.openSettingsJson', { revealSetting: { key: 'lenses.format.customStyles' } })),
@@ -172,11 +182,13 @@ export function activate(context: vscode.ExtensionContext) {
       await set('format.style', 'custom:' + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
       await vscode.commands.executeCommand('lenses.editCustomStyles');
     }),
+    vscode.commands.registerCommand('lenses.showDifferences', () =>
+      vscode.commands.executeCommand('workbench.action.openSettings', `@id:${DIFFERENCES.map(d => d.setting).join(',')}`)),
     vscode.commands.registerCommand('lenses.openCanonical', () => format.openCanonical()),
     vscode.commands.registerCommand('lenses.openProjected', () => format.openProjected()),
     vscode.commands.registerCommand('lenses.gotoCanonicalLine', () => format.gotoCanonicalLine()),
-    vscode.commands.registerCommand('lenses.setHighlight', (id: string) => set('highlight.scheme', id)),
-    vscode.commands.registerCommand('lenses.setFormat', (id: string) => set('format.style', id)),
+    vscode.commands.registerCommand('lenses.setHighlight', (id: string) => setHighlight(id)),
+    vscode.commands.registerCommand('lenses.setFormat', (id: string) => setFormat(id)),
   );
 }
 

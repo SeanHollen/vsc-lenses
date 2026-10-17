@@ -8,9 +8,9 @@ const fs = require('fs');
 const DEFAULTS = {
   // No built-in AI: Copilot chat, agents, inline AI suggestions.
   'chat.disableAIFeatures': true,
-  'chat.commandCenter.enabled': false,
+  'chat.agentsControl.enabled': 'hidden',
   // Its leftover: the right-hand side bar (home of the chat panel). The Accounts button is UI
-  // state rather than a setting; see seed-state.js.
+  // state rather than a setting; see lenses.editor.showAccounts and apply-state.js.
   'workbench.secondarySideBar.defaultVisibility': 'hidden',
   // Auto-save; styled views hold saves until the code parses.
   'files.autoSave': 'afterDelay',

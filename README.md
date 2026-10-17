@@ -9,6 +9,8 @@ A VS Code-based editor for JS/TS that changes four things:
 3. **Removed built-in AI features.** No Copilot chat, agents, inline AI suggestions or their leftover UI. Use AI codegen through tools outside the editor, like Claude Code.
 4. **Tabs per mode.** Explorer and Source Control each keep their own set of tabs, and switching sidebars swaps them instantly, with no tabs closing or reopening.
 
+It also turns on auto-save and turns off Restricted Mode. [Every difference is a setting](#every-difference-from-vs-code-is-a-setting) you can switch back.
+
 Highlighting and formatting add two icons to the activity bar: **Highlight Lenses** (highlighter) and **Format Lenses** (lines + arrow).
 Each opens a panel of options. Every option has a live example and a legend for the current file.
 
@@ -30,22 +32,33 @@ Lenses runs as **its own editor**: VS Code with a separate data folder (`~/.loca
 - `./uninstall.sh` removes the `lenses` command. `./uninstall.sh --purge` also deletes `~/.local/share/lenses`.
 - Overrides (environment variables): `LENSES_HOME`, `LENSES_COMMAND`, `LENSES_BIN_DIR`, `CODE`. See the top of `install.sh`.
 
-What `install.sh` does: `npm ci`, build, package `dist/lenses.vsix` and `dist/tabs-per-mode.vsix`, install both into Lenses' data folder, apply the editor defaults below, and write the launcher.
+What `install.sh` does: `npm ci`, build, package `dist/lenses.vsix` and `dist/tabs-per-mode.vsix`, install both into Lenses' data folder, apply the editor settings below, and write the launcher.
 
-### Editor defaults: no built-in AI, auto-save, no Restricted Mode
+### Every difference from VS Code is a setting
 
-Lenses is meant to be used alongside AI tools that live outside the editor (e.g. Claude Code), so VS Code's own AI features and their leftovers are turned off:
+Each way Lenses differs from plain VS Code can be switched back with one setting. **Lenses: Show Differences from VS Code** (command palette) opens the Settings editor filtered to exactly these:
 
-| | How |
-|---|---|
-| Copilot chat, agents, inline AI suggestions | `chat.disableAIFeatures: true` |
-| Chat button in the title bar | `chat.commandCenter.enabled: false` |
-| Right-hand side bar (the chat panel's home), never shown at startup | `workbench.secondarySideBar.defaultVisibility: "hidden"` |
-| Accounts button (Copilot sign-in) | "Hide Accounts" UI state in Lenses' state database |
-| Auto-save, held while code can't be canonicalized | `files.autoSave: "afterDelay"`, `files.autoSaveWhenNoErrors: true` |
-| No Restricted Mode: every folder is trusted, with no "Do you trust the authors?" prompt | `security.workspace.trust.enabled: false` |
+| What Lenses changes | Setting | Lenses | Plain VS Code |
+|---|---|---|---|
+| Highlight Lenses: activity bar icon, status bar item, lens colors | `lenses.highlight.enabled` | `true` | `false` |
+| Format Lenses: activity bar icon, display formats | `lenses.format.enabled` | `true` | `false` |
+| Separate tabs for Explorer and Source Control | `tabsPerMode.enabled` | `true` | `false` |
+| Copilot chat, agents, inline AI suggestions | `chat.disableAIFeatures` | `true` | `false` |
+| Agents control in the title bar | `chat.agentsControl.enabled` | `"hidden"` | `"compact"` |
+| Right-hand side bar (the chat panel's home) at startup | `workbench.secondarySideBar.defaultVisibility` | `"hidden"` | `"visibleInWorkspace"` |
+| Accounts button (Copilot sign-in) | `lenses.editor.showAccounts` | `false` | `true` |
+| Auto-save | `files.autoSave` | `"afterDelay"` | `"off"` |
+| Hold auto-save while the code has errors (styled views can only save code that parses) | `files.autoSaveWhenNoErrors` | `true` | `false` |
+| Restricted Mode: "Do you trust the authors?" prompts and banner | `security.workspace.trust.enabled` | `false` | `true` |
 
-These are written into Lenses' own `settings.json` (`tools/seed-settings.js`), because VS Code lays out the window before extensions load. Extension-provided defaults would let the side bar flash open. Only keys you haven't set are added, so your changes win, even across re-installs. Change them in Lenses' settings like any VS Code setting. Hiding Accounts is UI state rather than a setting, so `tools/seed-state.js` writes it to Lenses' state database. That's skipped if Lenses is running (close it and re-run); you can also right-click the Accounts icon → Hide.
+The first three turn off immediately, with no reload: the icons, status bar items and the Tabs Per Mode section disappear, files show as they are on disk, and the two mode groups are merged into one. Choosing a lens or format from the command palette turns its feature back on.
+
+Lenses is meant to be used alongside AI tools that live outside the editor (e.g. Claude Code), which is why VS Code's own AI features and their leftovers are off.
+
+How they're applied:
+
+- The VS Code settings are written into Lenses' own `settings.json` (`tools/seed-settings.js`), because VS Code lays out the window before extensions load (extension-provided defaults would let the side bar flash open, and trust is decided at startup). Only keys you haven't set are added, so your changes win, even across re-installs.
+- VS Code keeps "show Accounts" as UI state, not a setting. The `lenses` launcher applies `lenses.editor.showAccounts` each time Lenses starts (`tools/apply-state.js`, copied into `~/.local/share/lenses`), so a change takes effect after you close all Lenses windows and reopen. It only writes when the setting changed, so right-clicking the activity bar to show or hide Accounts still sticks.
 
 You can also install `dist/lenses.vsix` into any VS Code yourself (Extensions → … → Install from VSIX). The extension ships the AI-off and auto-save settings as defaults, so they apply there too (without the side-bar and Accounts tweaks).
 
@@ -130,6 +143,7 @@ From the Tabs Per Mode extension (`extensions/tab-modes`, merged in with its his
 - **Ctrl+Shift+E / Ctrl+Shift+G** and the status-bar buttons switch in the same frame. Clicking the activity-bar icons swaps the tabs about two frames after the sidebar (an extension can only react once VS Code has drawn the click).
 - Files open into the current mode's group. A change opened from Source Control lands in the Source Control group as its diff.
 - The small **Tabs Per Mode** section at the bottom of the Explorer and Source Control sidebars is how clicks on the sidebar icons are detected. It's expanded automatically the first time you open a folder; keep it expanded (it can be tiny). If you collapse it, use Ctrl+Shift+E / G or re-expand it.
+- `tabsPerMode.enabled: false` turns it off (plain VS Code tabs).
 - `tabsPerMode.strategy: "reopen"` brings back the original close-and-reopen behaviour (with auto-navigate to the equivalent file/diff). See [extensions/tab-modes/README.md](extensions/tab-modes/README.md).
 
 ## Development

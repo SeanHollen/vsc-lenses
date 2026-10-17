@@ -46,14 +46,16 @@
         {
           "type": "webview",
           "id": "lenses.highlightView",
-          "name": "Highlighting"
+          "name": "Highlighting",
+          "when": "config.lenses.highlight.enabled"
         }
       ],
       "lensesFormat": [
         {
           "type": "webview",
           "id": "lenses.formatView",
-          "name": "Formatting"
+          "name": "Formatting",
+          "when": "config.lenses.format.enabled"
         }
       ]
     },
@@ -92,11 +94,22 @@
         "command": "lenses.gotoCanonicalLine",
         "title": "Go to Canonical Line\u2026",
         "category": "Lenses"
+      },
+      {
+        "command": "lenses.showDifferences",
+        "title": "Show Differences from VS Code",
+        "category": "Lenses"
       }
     ],
     "configuration": {
       "title": "Lenses",
       "properties": {
+        "lenses.highlight.enabled": {
+          "type": "boolean",
+          "default": true,
+          "order": 0,
+          "markdownDescription": "Show the Highlight Lenses panel and status bar item, and apply the chosen lens. Turn off to hide them and use plain syntax highlighting."
+        },
         "lenses.highlight.scheme": {
           "type": "string",
           "default": "none",
@@ -116,6 +129,12 @@
           "type": "boolean",
           "default": true,
           "description": "Turn ordinary syntax colors into plain text while a lens is on, so the lens colors stand out."
+        },
+        "lenses.format.enabled": {
+          "type": "boolean",
+          "default": true,
+          "order": 10,
+          "markdownDescription": "Show the Format Lenses panel and open JS/TS files in the chosen display format. Turn off to hide it and edit files as they are on disk."
         },
         "lenses.format.style": {
           "type": "string",
@@ -306,6 +325,12 @@
               }
             ]
           ]
+        },
+        "lenses.editor.showAccounts": {
+          "type": "boolean",
+          "default": false,
+          "order": 20,
+          "markdownDescription": "Show the Accounts button in the activity bar. VS Code keeps this as UI state rather than a setting, so the `lenses` launcher applies it when Lenses starts (close all Lenses windows, then reopen). Right-clicking the icon also works. Run **Lenses: Show Differences from VS Code** to see every setting Lenses changes."
         }
       }
     },
@@ -331,7 +356,7 @@
       "files.autoSave": "afterDelay",
       "files.autoSaveWhenNoErrors": true,
       "chat.disableAIFeatures": true,
-      "chat.commandCenter.enabled": false
+      "chat.agentsControl.enabled": "hidden"
     }
   },
   "scripts": {
