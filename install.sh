@@ -50,7 +50,7 @@ if [ ! -e "$USER_DATA/User/settings.json" ]; then
   [ -e "$USER_DATA/User/settings.json" ] || echo '{}' > "$USER_DATA/User/settings.json"
 fi
 
-step "Applying Lenses editor settings (no AI features, no right side bar, auto-save, no Restricted Mode)"
+step "Applying Lenses editor settings (no AI features, no right side bar, auto-save, no Restricted Mode, no release notes)"
 node "$HERE/tools/seed-settings.js" "$USER_DATA/User/settings.json"
 # The launcher re-runs this on every start, so keep a copy that works even if this repo moves.
 cp "$HERE/tools/apply-state.js" "$LENSES_HOME/apply-state.js"

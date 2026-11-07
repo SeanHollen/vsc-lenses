@@ -18,6 +18,9 @@ const DEFAULTS = {
   // No Restricted Mode: every folder on this machine is trusted, with no prompt or banner.
   // Read at startup, so it must be in settings.json.
   'security.workspace.trust.enabled': false,
+  // No Release Notes tab after VS Code updates. Lenses keeps its own data folder, so it would
+  // otherwise show them again even after you've seen them in your normal VS Code.
+  'update.showReleaseNotes': false,
 };
 
 const file = process.argv[2];

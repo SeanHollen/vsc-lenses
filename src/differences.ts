@@ -18,4 +18,5 @@ export const DIFFERENCES: Difference[] = [
   { setting: 'files.autoSave', what: 'Auto-save', vscode: 'off' },
   { setting: 'files.autoSaveWhenNoErrors', what: 'Hold auto-save while the file has errors', vscode: false },
   { setting: 'security.workspace.trust.enabled', what: 'Restricted Mode (workspace trust prompts)', vscode: true },
+  { setting: 'update.showReleaseNotes', what: 'Release Notes tab after VS Code updates', vscode: true },
 ];

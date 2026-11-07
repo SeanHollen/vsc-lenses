@@ -9,7 +9,7 @@ A VS Code-based editor for JS/TS that changes four things:
 3. **Removed built-in AI features.** No Copilot chat, agents, inline AI suggestions or their leftover UI. Use AI codegen through tools outside the editor, like Claude Code.
 4. **Tabs per mode.** Explorer and Source Control each keep their own set of tabs, and switching sidebars swaps them instantly, with no tabs closing or reopening.
 
-It also turns on auto-save and turns off Restricted Mode. [Every difference is a setting](#every-difference-from-vs-code-is-a-setting) you can switch back.
+It also turns on auto-save and turns off Restricted Mode and the Release Notes tab after VS Code updates. [Every difference is a setting](#every-difference-from-vs-code-is-a-setting) you can switch back.
 
 Highlighting and formatting add two icons to the activity bar: **Highlight Lenses** (highlighter) and **Format Lenses** (lines + arrow).
 Each opens a panel of options. Every option has a live example and a legend for the current file.
@@ -50,6 +50,7 @@ Each way Lenses differs from plain VS Code can be switched back with one setting
 | Auto-save | `files.autoSave` | `"afterDelay"` | `"off"` |
 | Hold auto-save while the code has errors (styled views can only save code that parses) | `files.autoSaveWhenNoErrors` | `true` | `false` |
 | Restricted Mode: "Do you trust the authors?" prompts and banner | `security.workspace.trust.enabled` | `false` | `true` |
+| Release Notes tab after VS Code updates | `update.showReleaseNotes` | `false` | `true` |
 
 The first three turn off immediately, with no reload: the icons, status bar items and the Tabs Per Mode section disappear, files show as they are on disk, and the two mode groups are merged into one. Choosing a lens or format from the command palette turns its feature back on.
 
